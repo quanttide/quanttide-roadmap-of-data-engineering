@@ -77,3 +77,18 @@ Blueprint 显式建模
 ```
 
 显式建模是地基，版本管理是第一层，diff 是第二层。三者按顺序建设。
+
+---
+
+## Blueprint 命令集
+
+Blueprint 子命令覆盖三格式（.md / .cue / .html）的完整生命周期：
+
+| 命令 | 操作对象 | 功能 |
+|------|----------|------|
+| `design` | `.md` | 维护人类可读的 Blueprint 文档 |
+| `formalize` | `.cue` | 从 Markdown 形式化为 CUE 结构化定义 |
+| `preview` | `.html` | 从 CUE 生成可视化页面 |
+| `version` | 版本元数据 | 维护版本历史与变更记录 |
+
+**流程**：`design`（写文档）→ `formalize`（形式化）→ `preview`（可视化）→ `version`（归档版本）
