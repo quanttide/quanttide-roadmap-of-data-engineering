@@ -82,13 +82,25 @@ Blueprint 显式建模
 
 ## Blueprint 命令集
 
-Blueprint 子命令覆盖三格式（.md / .cue / .html）的完整生命周期：
+五命令覆盖两条路径——新项目从零创建 + 老项目整理入库：
+
+```
+review → design → formalize → preview → version
+  ↑                                                    │
+  └──────────── 循环迭代，每次 review 更少问题 ──────────┘
+```
 
 | 命令 | 操作对象 | 功能 |
 |------|----------|------|
+| `review` | 已有 Blueprint | 审计现有 Blueprint，输出问题清单。老项目进入系统的入口 |
 | `design` | `.md` | 维护人类可读的 Blueprint 文档 |
 | `formalize` | `.cue` | 从 Markdown 形式化为 CUE 结构化定义 |
 | `preview` | `.html` | 从 CUE 生成可视化页面 |
 | `version` | 版本元数据 | 维护版本历史与变更记录 |
 
-**流程**：`design`（写文档）→ `formalize`（形式化）→ `preview`（可视化）→ `version`（归档版本）
+## Feature 愿景
+
+**数据蓝图治理工具**：把零零散散、各个时期、各种版本的 Blueprint，逐渐规范到统一格式，让新人通过工具快速吸收历史海量项目经验。
+
+- v0.1：五命令基础流程，能搞定几个项目（如 GHTorrent）
+- v0.5+：完整治理能力，批量整理、跨项目一致
