@@ -1,6 +1,69 @@
-# Blueprint 平台核心需求
+# 数据云架构设计
+
+> 更新日期：2026-07-23 | 来源：7月22日数据业务部门全员会议
+
+---
+
+## 四层框架
+
+```
+需求层 Requirement（面向客户，动词 clarify）
+    ↓
+规格层 Specification（面向技术，动词 design）
+    ├── Contract（数据契约：输入输出规格）
+    └── Blueprint（处理蓝图：工作流步骤）
+    ↓
+实现层 Implementation（动词 implement）
+    ├── Catalog（数据目录：运行时文件注册）
+    └── Pipeline（数据管道：可执行处理流程）
+    ↓
+任务层 Task（动词 execute）
+    ├── Feature（产出）
+    └── Observation（观测）
+```
+
+完整流程链：
+
+```
+Context → clarify → Requirements (DRD) → design → Specification (Contract + Blueprint)
+    → implement → Catalog + Pipeline
+    → execute → Task
+    → report → transfer → Delivery
+```
+
+## 能力入口（Skill）
+
+CLI 作为能力入口，组织为领域模型：
+
+```
+Skill（能力入口）
+├── Blueprint（做什么）
+├── Contract（输入输出规范）
+├── Pipeline（怎么执行）
+└── Catalog（注册和发现）
+```
+
+领域模型命名示例：`catalog discover`、`contract validate`、`blueprint design`。
+
+## 命令映射（旧→新）
+
+| 新命令 | 旧命令 | 层级 | 说明 |
+|--------|--------|------|------|
+| `clarify` | — | Requirement | 从客户上下文澄清需求，生成 DRD |
+| `design` | `design` + `formalize` | Specification | 从 DRD 设计规格书（Contract + Blueprint） |
+| `implement` | — | Implementation | 从 Specification 生成 Catalog + Pipeline |
+| `preview` | `preview` | 跨层 | 预览 Specification / DRD |
+| `report` | — | Delivery | 对客户汇报 |
+| `transfer` | `transfer` | Delivery | 数据传输 |
+| `version` | `version` | 跨层 | 版本管理 |
+| `review` | `review` | 跨层 | 审计 Requirements 或 Specification |
+
+---
+
+# Blueprint 平台核心需求（历史参考）
 
 > 来源：GHTorrent 脱敏交付复盘 | 日期：2026-07-17
+> 注意：此部分为旧框架下的设计，已由上方四层框架替代。保留作为设计演进记录。
 
 ---
 
