@@ -1,25 +1,14 @@
-# quanttide-data-toolkit — 领域模型库（现状勘察 + 提取路径）
+# Rust 包模型设计（packages/rust/，quanttide-data crate）
 
-> 更新日期：2026-08-02 | 来源：quanttide-data-toolkit monorepo 勘察 + qtcloud-data src/cli 模型梳理
+> 更新日期：2026-08-02 | 对应子包：`packages/rust/`（crate `quanttide-data` v0.1.0，CLI 已依赖）
 
-## 一、toolkit 现状：多语言 monorepo
+---
 
-`packages/quanttide-data-toolkit` 是**多语言数据工具包单仓**（`monorepo`），统一承载数据领域模型，各语言 SDK 共享契约：
+# 一、模型现状
 
-```
-quanttide-data-toolkit/
-├── packages/
-│   ├── python/          # Python SDK（quanttide_data，Pydantic 模型）
-│   ├── dart/            # Dart 工具包
-│   ├── flutter/         # Flutter SDK（flutter_quanttide_data，UI 组件 + BLoC）
-│   └── rust/            # Rust crate（quanttide-data v0.1.0）★ CLI 已在消费
-```
+`packages/rust/` = crate `quanttide-data`（v0.1.0，已发布 crates.io）——qtcloud-data CLI 已依赖（`Cargo.toml: quanttide-data = "0.1.0"`）。
 
-## 二、Rust 包现状（CLI 提取的目标，已存在非新建）
-
-`packages/rust/` = crate `quanttide-data`（v0.1.0，已发布 crates.io）——**qtcloud-data CLI 已依赖**（`Cargo.toml: quanttide-data = "0.1.0"`，`spec/mod.rs` 使用 `quanttide_data::Blueprint`）。
-
-### 已有模型（toolkit 侧）
+### 已有模型
 
 | 类型 | 说明 |
 |------|------|
@@ -33,56 +22,14 @@ quanttide-data-toolkit/
 
 序列化：CUE ↔ Rust struct ↔ JSON/YAML；校验：`validate`。
 
-## 三、模型矩阵：toolkit 已有 vs CLI 待下沉
-
-| 领域模型 | CLI 位置 | toolkit Rust 包 | 状态 |
-|---------|---------|----------------|------|
-| Blueprint | （消费 toolkit） | ✅ `types::blueprint` | **已下沉** |
-| Contract | （消费 toolkit） | ✅ `types::contract` | **已下沉** |
-| Pipeline/Step | （消费 toolkit） | ✅ `types::pipeline` | **已下沉** |
-| **Specification envelope** | `src/spec/mod.rs`（api_version/kind/metadata/spec + wrap/validate） | ❌ 无 | **待下沉** |
-| **Volume** | `src/implementation/catalog.rs`（registry.json 记录） | ❌ 无（datasource 相关） | **待下沉** |
-| **Job** | `src/stage/process.rs`（jobs.json 记录） | ❌ 无（status 相关） | **待下沉** |
-| DRD | `src/stage/clarify.rs`（自由格式文件，无强类型） | ❌ 无 | 暂不建模 |
-
-## 四、提取路径（补齐已有 Rust 包，非新建）
-
-1. **Specification envelope 下沉**：`spec/mod.rs` 的 Specification 模型 + wrap/validate 迁入 `packages/rust/`（新 `types/specification.rs`），CLI `spec/` 保留命令包装
-2. **Volume 下沉**：catalog.rs 的 `Volume`/`RegisterVolume` 迁入（挂 datasource 或新 `types/catalog.rs`）
-3. **Job 下沉**：process.rs 的 `ProcessJobRecord` 迁入（挂 status 或新 `types/job.rs`）
-4. 消费点改 `use quanttide_data::...`，CLI 150+ 测试全绿，Rust 包升 v0.2.0
-
-## 五、配套文档同步（toolkit 现状过时项）
-
-勘察发现 toolkit 仓库内部文档滞后于实际，提取时一并修正：
-
-| 文档 | 过时项 | 修正 |
-|------|--------|------|
-| `README.md` SDK 表 | 只列 python/flutter，缺 dart/rust | 补全四语言 |
-| `ROADMAP.md`（主仓） | "创建 packages/rust/"未勾选，实际已存在 | 勾选/移除 |
-| `packages/rust/ROADMAP.md` | "包名 quanttide-data-core \| 状态规划中"与 Cargo.toml（quanttide-data）不符 | 对齐包名与状态 |
-| `STATUS.md`（quanttide-data 仓） | 标注 dart/v0.3.0-9，未体现 rust 包 | 补 rust/v0.1.0 行 |
-
-## 六、消费方地图（下沉价值）
-
-| 消费方 | 语言 | 模型来源 |
-|--------|------|---------|
-| qtcloud-data CLI | Rust | `quanttide-data` crate（Blueprint/Contract/Pipeline ✅，Specification/Volume/Job ⏳） |
-| Python SDK 消费方 | Python | `packages/python`（契约测试互验） |
-| Flutter/Dart 消费方 | Dart | `packages/flutter`/`packages/dart`（UI 展示模型） |
-| provider Go 服务 | Go | 跨语言借鉴设计（单一事实源在 toolkit） |
-
-
 ---
 
-# 模型与四层框架不一致分析（2026-08-02）
+# 二、模型与四层框架不一致分析（实测确认）
 
 `packages/rust/` 的模型是 CLI 与平台共享的**单一事实源**——它错了，CLI 只能打补丁。
-实测确认（`spec wrap` 静默丢字段）后，逐项列出不一致与重构方案。
+实测确认（`spec wrap` 静默丢字段）后，逐项列出不一致。
 
 ## 不一致 1：Blueprint 聚合了不该聚合的（跨层 + 运行态混入）
-
-### 现状
 
 ```rust
 pub struct Blueprint {
@@ -104,13 +51,9 @@ pub struct Blueprint {
 
 ## 不一致 2：Pipeline 建模为列表，而非状态机
 
-### 现状
-
 ```rust
 pub struct Pipeline { pub name: String, pub steps: Vec<Step> }   // 列表：隐式顺序
 ```
-
-### 问题
 
 1. **无法表达分支/条件**（案例：促销日 vs 非促销日走不同流程）
 2. **与 CLI 产出不一致**：CLI `design blueprint` 产出 Step Functions 风格 `start_at`/`states`——模型无此字段 → `spec wrap` 时 **serde 静默丢弃**（实测：wrap 后 start_at/states 消失，无错误）
@@ -128,7 +71,7 @@ pub struct Pipeline { pub name: String, pub steps: Vec<Step> }   // 列表：隐
 
 ---
 
-# 重构方案：Rust 模型对齐四层框架
+# 三、重构方案：Rust 模型对齐四层框架
 
 ## 目标模型
 
@@ -198,6 +141,15 @@ impl Pipeline {
 2. CLI `spec wrap` → 组合 contract + blueprint + pipeline（**无 merge 补丁**）
 3. CLI `implement` → 从 blueprint.steps 生成代码（pipeline 已是状态机）
 4. CLI `process` → 消费 pipeline.states（状态机执行，支持分支）
+
+---
+
+# 四、提取路径（CLI → Rust 包下沉）
+
+1. **Specification envelope 下沉**：`spec/mod.rs` 的 Specification 模型 + wrap/validate 迁入 `packages/rust/`（新 `types/specification.rs`，与重构合并），CLI `spec/` 保留命令包装
+2. **Volume 下沉**：catalog.rs 的 `Volume`/`RegisterVolume` 迁入（挂 datasource 或新 `types/catalog.rs`）
+3. **Job 下沉**：process.rs 的 `ProcessJobRecord` 迁入（挂 status 或新 `types/job.rs`）
+4. 消费点改 `use quanttide_data::...`，CLI 150+ 测试全绿
 
 ## 跨语言同步（monorepo）
 
