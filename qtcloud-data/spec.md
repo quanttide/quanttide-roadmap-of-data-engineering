@@ -16,7 +16,7 @@
 ```
 规格层 Specification
     ├── Contract（数据契约：输入输出规格）
-    └── Blueprint（处理蓝图：工作流步骤）
+    └── Blueprint（数据蓝图：工作流步骤）
 ```
 
 Contract 与 Blueprint **平级**。
@@ -94,7 +94,7 @@ Specification:
     contract:            # ← 数据契约（与 blueprint/pipeline 平级）
       input: { schema, format }
       output: { schema, format, rules }
-    blueprint:           # ← 处理蓝图：工作流步骤 = 流程定义（有自己的定义方式）
+    blueprint:           # ← 数据蓝图：工作流步骤 = 流程定义（有自己的定义方式）
       name
       steps: [ { name, from, to, desc, depends? } ]
     pipeline:            # ← 可执行管道：状态机 = blueprint 流程的投影（实现层）
